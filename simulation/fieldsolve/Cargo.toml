@@ -1,0 +1,17 @@
+[package]
+name = "fieldsolve"
+version = "0.1.0"
+edition = "2024"
+description = "Fast 3D electrostatic (Laplace) solver: geometric multigrid with red-black Gauss-Seidel on masked Dirichlet grids"
+
+[dependencies]
+rayon = "1.12.0"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+debug = false
+
+[profile.test]
+opt-level = 3

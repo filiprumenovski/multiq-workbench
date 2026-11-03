@@ -1,0 +1,10 @@
+[package]
+name = "mqviz"
+version = "0.1.0"
+edition = "2021"
+description = "Live, interactive simulator of the MultiQ-IT m/z splitter channel (ion flow and ion currents) on chsim's validated physics"
+
+[dependencies]
+chsim = { path = "../chsim" }
+egui = "0.36"
+rayon = "1"

@@ -1,0 +1,44 @@
+<section id="panel-compare" role="tabpanel" aria-labelledby="tab-compare" hidden>
+  <div id="research" class="panel comparison-panel">
+    <div class="panel-header"><div><h2>Mass spectrum</h2><span class="subtle-label">Digitized figure data · S14 / Fig. 5</span></div><button class="btn" id="research-reference">Restore S14 reference</button><div class="plot-legend"><span><i class="legend-measured"></i>Measured</span><span><i class="legend-model"></i>Model</span></div></div>
+    <div id="research-context" class="context-line"></div>
+    <canvas id="research-spectrum" role="img" aria-label="Published mass spectrum with computed relative species peak heights"></canvas>
+    <div id="research-spectrum-note" class="plot-caption"></div>
+  </div>
+  <section class="panel comparison-table"><div class="panel-header"><h2>Measurement checks</h2><span class="subtle-label">Source and model shown separately</span></div><div class="table-scroll" id="research-comparison"></div></section>
+  <div class="reference-note"><span class="note-symbol" aria-hidden="true">i</span><p>References are digitized published figures, not raw acquisition files. Pixel bounds describe reading uncertainty; model errors describe ion sampling.</p></div>
+  <div class="panel methodology">  <details><summary>What is measured, fitted, or still missing?</summary>
+    <div class="text-small">
+      S14: the source Na/main ratio is 0.0893 ± 0.0223, and the AC-on/open ratio of ratios is 0.640 ± 0.186. The reference source mixture now uses their measured ratio. Fig. 5 uses the published 5C source abundances and the existing cross-talk extraction, including upper limits and marginal peaks.
+      <p>The current engine uses the previously calibrated code geometry: RF ±70 V, AC ±0.35 V, inferred 7 mm gate aperture. S14 reports 83 kHz and AC 3 V; the drive convention and transfer to the rods remain unverified. Agreement here is a calibrated comparison, not an independent validation. Fig. 5 RF and DC settings are not fully reported.</p>
+      <p>Pixel bounds are not statistical confidence intervals. T/(T+C) is an ideal repeat-pass proxy, not the measured AC-on/open signal or collection time. No whole-trap delivery, space charge, or nine-channel competition is simulated. The recorded R31 scan and current mqviz runs use different engines; their results are not interchangeable.</p>
+      <p>The results log’s later corrections supersede the earlier mode-splitting explanation and the withdrawn S4 high-charge residence claim. Optimization below tests the low-load AC trade-off only.</p>
+      <div id="research-sources"></div>
+    </div>
+  </details>
+</div>
+</section>
+<section id="panel-optimize" role="tabpanel" aria-labelledby="tab-optimize" hidden>
+  <div class="panel study-setup">
+    <div class="study-controls"><label class="form-label">Minimum mass resolving power<input class="form-select" id="research-resolution" type="number" min="5" max="150" step="1" value="50"></label><label class="form-label">Ions per coarse frequency<select class="form-select" id="research-ions"><option value="1000">1,000 · exploratory</option><option value="3000">3,000 · more precise</option><option value="5000">5,000 · slower</option></select></label><div class="study-actions"><button class="btn btn-primary" id="research-start">Run study <span aria-hidden="true">→</span></button><button class="btn" id="research-cancel" disabled>Cancel</button></div></div>
+    <div class="study-progress"><span id="research-status" role="status">Ready to scan.</span><progress id="research-progress" max="1" value="0" hidden></progress></div>
+  </div>
+  <div id="research-outcome" class="outcome-strip" aria-label="Independent confirmation results" hidden></div>
+  <div class="study-analysis"><section class="panel sweep-panel"><div class="panel-header"><h2>Transmission by frequency</h2><span class="subtle-label">Target ions · per pass</span></div><div id="research-curve-legend" class="plot-legend curve-legend" hidden></div><div id="research-empty" class="empty-state"><span aria-hidden="true">⌁</span><h3>Your study starts here</h3><p>Choose a resolution threshold and run the four-drive scan. Completed curves and counts are saved automatically.</p></div><canvas id="research-curves" role="img" aria-label="Computed transmission frequency scans at four AC drives"></canvas></section>
+  <section class="panel candidates-panel"><div class="panel-header"><h2>Candidate settings</h2><span class="subtle-label">Preview applies to the simulator</span></div><div class="table-scroll" id="research-results"></div><div id="research-result-note" class="plot-caption">Ranking uses conservative sampling bounds. Geometry and calibration uncertainty are not included.</div></section>
+  </div><div class="reference-note"><span class="note-symbol" aria-hidden="true">i</span><p>Suggestions are candidates for hardware testing. This study varies AC only; it does not establish a hardware optimum or model space charge.</p></div>
+  <div class="panel historical-panel">    <details id="mq-recorded"><summary>Recorded AC sweep · reference</summary>
+    <div class="viz-controls">
+      <label class="form-label">AC drive · fraction of S14 setting<select class="form-select" id="mq-ac"><option value="0.25">0.25×</option><option value="0.5">0.50×</option><option value="0.75">0.75×</option><option value="1">1.00× · reference setting</option><option value="1.5">1.50×</option><option value="2">2.00×</option></select></label>
+      <span id="mq-frequency" class="tabular-nums" aria-live="polite"></span>
+    </div>
+    <div class="viz-grid" aria-live="polite">
+      <div class="card viz-stat"><div>Frequency resolving power</div><div class="viz-stat-value tabular-nums" id="mq-resolution"></div><div class="text-small" id="mq-width"></div></div>
+      <div class="card viz-stat"><div>Target transmitted per pass</div><div class="viz-stat-value tabular-nums" id="mq-transmission"></div><div class="text-small">Fraction of injected target ions</div></div>
+      <div class="card viz-stat"><div>Na-adduct / target transmission</div><div class="viz-stat-value tabular-nums" id="mq-leakage"></div><div class="text-small">At the target peak · lower is better</div></div>
+    </div>
+    <div id="mq-repeat" class="mq-caption text-small" aria-live="polite"></div>
+    <details><summary class="text-small">Model scope &amp; source</summary><div class="text-small">Recorded R31 AC sweep · chsim · blind_prediction_ac_scan.txt. Single-channel, calibrated code geometry; inferred 7 mm gate aperture; no channel space charge. Each drive setting uses its own target peak frequency. Resolving power is frequency / FWHM, not mass resolving power. T/(T+C) assumes repeat passes until transmission or collision loss; it does not predict collection time or nine-channel competition. Render geometry is schematic at the channels; no computed trajectories are overlaid.</div></details>
+    </details>
+</div>
+</section>

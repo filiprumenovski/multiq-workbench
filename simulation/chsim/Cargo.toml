@@ -1,0 +1,15 @@
+[package]
+name = "chsim"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+metal = "0.33"
+bytemuck = { version = "1", features = ["derive"] }
+rayon = "1"
+fieldsolve = { path = "../fieldsolve" }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

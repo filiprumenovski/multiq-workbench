@@ -1,0 +1,665 @@
+<div id="chait-multiq" data-workspace="explore">
+  <header class="app-header">
+    <div class="brand"><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="30" height="30" rx="9" fill="currentColor"/><g fill="var(--primary-foreground)"><circle cx="11" cy="11" r="3"/><circle cx="21" cy="11" r="3"/><circle cx="11" cy="21" r="3"/><circle cx="21" cy="21" r="3"/></g></svg><div><strong>MultiQ</strong></div></div>
+    <nav class="workspace-tabs" role="tablist" aria-label="Workspace">
+      <button id="tab-explore" class="workspace-tab" role="tab" aria-selected="true" aria-controls="panel-explore" tabindex="0" data-view="explore"><span aria-hidden="true">◈</span> Explore</button>
+      <button id="tab-compare" class="workspace-tab" role="tab" aria-selected="false" aria-controls="panel-compare" tabindex="-1" data-view="compare"><span aria-hidden="true">≋</span> Compare</button>
+      <button id="tab-optimize" class="workspace-tab" role="tab" aria-selected="false" aria-controls="panel-optimize" tabindex="-1" data-view="optimize"><span aria-hidden="true">⌁</span> Optimize <span class="tab-count" id="study-count" hidden></span></button>
+      <button id="tab-tandem" class="workspace-tab" role="tab" aria-selected="false" aria-controls="panel-tandem" tabindex="-1" data-view="tandem">Tandem</button>
+    </nav>
+    <div class="header-actions"><span class="status-pill" id="app-run-state" data-state="loading"><i></i>Preparing</span><button class="btn" id="research-export" type="button">Export <span aria-hidden="true">↗</span></button></div>
+  </header>
+  <div class="app-body">
+    <div class="work-area">
+      <section id="panel-explore" role="tabpanel" aria-labelledby="tab-explore">
+        <div class="mq-workspace">
+          <section id="mq-render" class="panel instrument-panel" aria-labelledby="mq-render-heading">
+            <div class="instrument-selectors"><h2 id="mq-render-heading">Instrument</h2><label class="form-label"><span class="sr-only">Assembly</span><select class="form-select" id="mq-assembly"><option value="bench">Photographed lab rig</option><option value="trap">486Q prototype</option><option value="tandem">Tandem nine-channel prototype</option><option value="rig">Experimental interface</option><option value="power">RF drive · S2</option><option value="tof">Parallel TOF concept</option></select></label><label class="form-label"><span class="sr-only">Inspect</span><select class="form-select" id="mq-inspect"><option value="all">Whole instrument</option></select></label></div>
+            <div id="mq-stage" role="img" aria-label="Interactive reconstruction of the MultiQ instrument"><div id="mq-loading">Preparing the instrument…</div></div>
+            <div class="instrument-toolbar"><button class="btn btn-quiet" id="mq-fit" type="button">Fit view</button><label class="form-check"><input type="checkbox" id="mq-cutaway">Cutaway</label><label class="form-check" title="Illustrative gas cloud, not a computed density field"><input type="checkbox" id="mq-cloud" checked>Cloud</label><label class="explode-label">Explode <input class="form-range" id="mq-explode" type="range" min="0" max="100" value="0"><span id="mq-explode-value">0%</span></label></div>
+            <details class="panel-details"><summary>Assembly details</summary><div><p id="mq-view-caption"></p><p id="mq-detail"></p><p id="mq-model-note"></p><p id="mq-motion-note"></p><p id="mq-source"></p><button class="btn" type="button" id="mq-play" aria-pressed="false">Play ions</button></div></details>
+          </section>
+          <section id="mq-results" class="panel ion-panel" aria-labelledby="ion-heading">
+            <div class="ion-toolbar"><h2 id="ion-heading">Ions</h2><label class="sr-only" for="trap-view">Computed view</label><select class="form-select compact-select" id="trap-view"><option value="channel">Trap exit → channel → gate</option><option value="entrance">Trap exit · close-up</option></select><button class="btn btn-quiet" type="button" id="mq-study" title="Locate the channel in the instrument">Locate ↗</button><span id="mq-link-status" class="sr-only"></span></div>
+            <div id="trap-live" role="img" aria-label="Actual computed ions in the trap exit and channel"></div>
+            <div id="trap-live-note" class="plot-caption">Waiting for computed ions…</div>
+            <div class="section-toolbar"><span>CHANNEL SECTION <small>x–z</small></span><label class="form-check"><input id="live-trails" type="checkbox" checked>Trails</label></div>
+            <div class="live-canvas-wrap"><canvas id="live-side" role="img" aria-label="Computed ion positions and potential contours in the x–z channel section"></canvas></div>
+            <div id="live-species" class="species-legend" aria-label="Species · select potential contours"></div>
+          </section>
+        </div>
+        <div class="diagnostics-grid">
+          <section class="panel"><div class="panel-header"><h2>Frequency terrain</h2><span class="subtle-label">Click to tune</span></div><div class="live-lower"><div><canvas id="live-terrain" role="img" aria-label="Local secular frequencies, solid x mode and dashed y mode"></canvas></div><div class="end-view"><canvas id="live-end" role="img" aria-label="Ion x–y projection"></canvas><span class="plot-caption">End view · x–y</span></div></div><div class="plot-caption">Solid x · dashed y · orange drive frequency</div></section>
+          <section class="panel"><div class="panel-header"><h2>Live transmission</h2><span class="subtle-label">±1σ · sampling error</span></div><div class="table-scroll" id="live-currents" aria-live="off"></div><div class="plot-caption">T/(T+C) assumes ideal repeat passes.</div></section>
+        </div>
+        <p class="scope-note">The blue box marks the trap-side entrance. Computed ions cover one channel; whole-cube dynamics and space charge are not modeled.</p>
+      </section>
+      <section id="panel-tandem" role="tabpanel" aria-labelledby="tab-tandem" hidden>
+        <div class="panel"><div class="panel-header"><h2>Tandem transport</h2><span class="tag">486Q × 2 · nine channels</span></div>
+        <div class="tandem-body">
+         <form id="tandem-form"><fieldset id="tandem-controls"><legend>Port drive · kHz (0 = blocked)</legend><div id="tandem-tones"></div>
+         <div class="tandem-inputs"><label>Ions<input id="tandem-n" type="number" min="1" max="512" value="64" required></label><label>Duration · ms<input id="tandem-ms" type="number" min="1" max="500" value="10" required></label><label>Seed<input id="tandem-seed" type="number" min="0" max="4294967295" value="486" required></label>
+         <label>Launch<select id="tandem-source"><option value="inlet">Splitter inlet</option><option value="mouth">Port mouths · diagnostic</option></select></label><label>Cube grid<select id="tandem-grid"><option value="preview">1.04 mm · preview</option><option value="fine">0.52 mm</option></select></label></div></fieldset>
+         <button class="btn btn-primary" id="tandem-run">Run tandem</button> <button class="btn" type="button" id="tandem-stop" disabled>Stop</button> <button class="btn" type="button" id="tandem-save" disabled>Save run</button></form>
+         <p id="tandem-status" role="status">Ready · Fig. 5 four-tone reconstruction</p>
+         <canvas id="tandem-map" width="880" height="260" aria-label="Computed ion positions: splitter, channels, combiner"></canvas>
+         <div id="tandem-counts"></div><div class="table-scroll"><table id="tandem-table"><thead><tr><th>Port</th><th>Drive</th><th>Entries</th><th>Returns</th><th>From other port¹</th><th>To combiner</th><th>Rod / wall loss</th><th>Forwarded by charge · 6+ / 7+ / 8+ / 9+ / 10+</th></tr></thead><tbody></tbody></table></div>
+         <p class="plot-caption">¹ Splitter entries after a return from a different port. Crossings count events; population totals count unique ions. Four charge-state targets follow Fig. 5. Port assignments, blocking voltage and drive amplitudes are model settings. Independent particles; no space charge.</p>
+         <details><summary>Original simulator · Processing 4 required</summary><button class="btn" type="button" id="original-trap">Open 486Q sketch</button> <button class="btn" type="button" id="original-channel">Open ejection sketch</button></details>
+        </div></div>
+      </section>
+      <!-- RESEARCH -->
+    </div>
+    <aside class="settings-panel" aria-label="Live simulation settings">
+      <div class="settings-heading"><h2>Simulation</h2><span class="tag">Single channel</span></div>
+      <!-- LIVE SIMULATOR -->
+      <details class="settings-note"><summary>Model scope</summary><p>One channel · N₂ at 300 K</p><p>40 ns integration steps. No space charge or whole-trap delivery.</p><p>Settings affect the local simulator. No instrument is connected.</p></details>
+      <button class="btn btn-quiet settings-reference" type="button" data-open-view="compare">Check against the paper <span aria-hidden="true">→</span></button>
+    </aside>
+  </div>
+  <div class="app-notices"><div id="live-error" class="error-notice" role="alert" hidden></div><div id="research-error" class="error-notice" role="alert" hidden></div><div id="research-export-note" role="status"></div></div>
+  <footer class="app-footer"><span id="live-status" aria-live="off">Loading mqviz fields…</span><span>LOCAL SIMULATION <b>·</b> FIGURE-DERIVED REFERENCES</span></footer>
+</div>
+<style>
+#mq-stage {position:relative;touch-action:none;overflow:hidden;}
+#mq-stage canvas {display:block;width:100%;height:100%;}
+#mq-loading {position:absolute;inset:46% 0 auto;text-align:center;}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/BufferGeometryUtils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/Pass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/SAOShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/DepthLimitedBlurShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/UnpackDepthRGBAShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/SAOPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/objects/Reflector.js"></script>
+<script type="application/json" id="mq-recorded-data">{"source": "mqsim/docs/blind_prediction_ac_scan.txt", "sha256": "1143acb3a9ca423b63e162b7dd17673ead038eac0e769d59b9f536385bae3205", "rows": [{"rel_AC": 0.25, "f_peak_kHz": 82.5, "FWHM_kHz": 0.79, "R_f": 104.4, "T_pass": 0.198, "T_over_TC": 0.924, "Na_main": 0.02}, {"rel_AC": 0.5, "f_peak_kHz": 83.0, "FWHM_kHz": 1.99, "R_f": 41.7, "T_pass": 0.169, "T_over_TC": 0.932, "Na_main": 0.21}, {"rel_AC": 0.75, "f_peak_kHz": 83.0, "FWHM_kHz": 4.63, "R_f": 17.9, "T_pass": 0.139, "T_over_TC": 0.856, "Na_main": 0.77}, {"rel_AC": 1.0, "f_peak_kHz": 81.5, "FWHM_kHz": 8.64, "R_f": 9.4, "T_pass": 0.213, "T_over_TC": 0.817, "Na_main": 0.92}, {"rel_AC": 1.5, "f_peak_kHz": 86.5, "FWHM_kHz": 19.11, "R_f": 4.5, "T_pass": 0.373, "T_over_TC": 0.971, "Na_main": 0.9}, {"rel_AC": 2.0, "f_peak_kHz": 88.75, "FWHM_kHz": 24.58, "R_f": 3.6, "T_pass": 0.5, "T_over_TC": 0.984, "Na_main": 0.9}]}</script>
+<script>
+(()=>{
+const root=document.getElementById('chait-multiq'),$=id=>root.querySelector('#'+id),stage=$('mq-stage');
+if(!window.THREE||!THREE.OrbitControls||!THREE.BufferGeometryUtils){$('mq-loading').textContent='The 3D renderer could not load.';return;}
+const modes=['bench','trap','tandem','rig','power','tof'],reduced=matchMedia('(prefers-reduced-motion: reduce)');
+function restore(p={}){return {assembly:modes.includes(p.assembly)?p.assembly:'tandem',inspect:typeof p.inspect==='string'?p.inspect:'all',ac:[.25,.5,.75,1,1.5,2].includes(Number(p.ac))?Number(p.ac):1,cloud:p.cloud!==false,cutaway:p.cutaway===true,explode:Math.max(0,Math.min(100,Number(p.explode)||0)),revision:Number(p.revision)||0};}
+let saved={};try{const value=JSON.parse(localStorage.getItem('multiq-state')||'null');if(value?.version===6)saved=value;}catch{}
+let state={...restore(saved),playing:false};
+const studyRuns=JSON.parse(document.getElementById('mq-recorded-data').textContent);
+function showStudy(){
+ const shown=state.assembly==='tandem'&&['channels','gate'].includes(state.inspect);
+ root.dataset.studyLinked=String(shown);
+ $('mq-link-status').textContent=shown?'Channel selected':'S14 study retained';
+ const run=studyRuns.rows.find(r=>r.rel_AC===state.ac);
+ $('mq-ac').value=String(state.ac);
+ $('mq-frequency').textContent='Peak tuned to '+run.f_peak_kHz.toFixed(2)+' kHz';
+ $('mq-resolution').textContent=run.R_f.toFixed(1);
+ $('mq-width').textContent=run.FWHM_kHz.toFixed(2)+' kHz FWHM';
+ $('mq-transmission').textContent=(100*run.T_pass).toFixed(1)+'%';
+ $('mq-leakage').textContent=run.Na_main.toFixed(2);
+ $('mq-repeat').textContent='Ideal repeat-pass estimate: '+(100*run.T_over_TC).toFixed(1)+'% eventually transmitted · collection time unmodeled';
+ return shown;
+}
+let renderer;
+try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'low-power'});}catch(e){$('mq-loading').textContent='WebGL is unavailable in this view.';return;}
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.25));renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=.88;renderer.physicallyCorrectLights=true;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;renderer.shadowMap.autoUpdate=false;
+stage.prepend(renderer.domElement);$('mq-loading').remove();
+const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(33,1,.5,8000),controls=new THREE.OrbitControls(camera,renderer.domElement);
+controls.enableDamping=!reduced.matches;controls.dampingFactor=.09;controls.enablePan=false;controls.minDistance=60;controls.maxDistance=4000;controls.maxPolarAngle=Math.PI*.88;
+const instrument=new THREE.Group();scene.add(instrument);
+const key=new THREE.DirectionalLight(undefined,2.3);key.position.set(-130,500,140);key.castShadow=true;key.shadow.mapSize.set(1024,1024);Object.assign(key.shadow.camera,{left:-160,right:160,top:160,bottom:-160,near:1,far:1000});key.shadow.bias=-.0001;key.shadow.normalBias=.07;key.shadow.radius=14;key.shadow.blurSamples=12;scene.add(key);
+const rim=new THREE.DirectionalLight(undefined,2.2);rim.position.set(150,90,-140);scene.add(rim);
+const floorMaterial=new THREE.MeshPhysicalMaterial({metalness:.02,roughness:.65,envMapIntensity:.65});
+const studioGeometry=new THREE.BufferGeometry(),profile=[[4000,0],[-500,0]],studioVertices=[],studioIndices=[];
+for(let i=1;i<=32;i++){const a=i*Math.PI/64;profile.push([-500-220*Math.sin(a),220-220*Math.cos(a)]);}profile.push([-720,4000]);
+profile.forEach(([z,y],i)=>{studioVertices.push(-4000,y,z,4000,y,z);if(i<profile.length-1){const a=i*2;studioIndices.push(a,a+1,a+2,a+1,a+3,a+2);}});
+studioGeometry.setAttribute('position',new THREE.Float32BufferAttribute(studioVertices,3));studioGeometry.setIndex(studioIndices);studioGeometry.computeVertexNormals();
+const floor=new THREE.Mesh(studioGeometry,floorMaterial);floor.receiveShadow=true;scene.add(floor);
+const displayMaterial=new THREE.MeshPhysicalMaterial({metalness:.16,roughness:.4,clearcoat:.25,clearcoatRoughness:.3});
+const plinth=new THREE.Mesh(new THREE.LatheGeometry([[12,-12.5],[89,-12.5],[95,-10.5],[95,-2],[91,0],[12,0],[12,-12.5]].map(p=>new THREE.Vector2(...p)),96),displayMaterial);plinth.castShadow=true;plinth.receiveShadow=true;scene.add(plinth);
+const fill=new THREE.DirectionalLight(undefined,.55);fill.position.set(-150,60,250);scene.add(fill);
+let backdropTexture=null,reflectionDirty=true,reflectionFrames=0;
+const reflection=THREE.Reflector?new THREE.Reflector(new THREE.PlaneGeometry(1800,1800),{textureWidth:768,textureHeight:768,clipBias:.003}):null;
+if(reflection){
+ reflection.rotation.x=-Math.PI/2;reflection.material.transparent=true;reflection.material.depthWrite=false;
+ reflection.material.fragmentShader=`uniform sampler2D tDiffuse;varying vec4 vUv;void main(){
+  vec2 uv=vUv.xy/vUv.w;vec2 d=vec2(.0016);vec3 c=texture2D(tDiffuse,uv).rgb*.4;
+  c+=(texture2D(tDiffuse,uv+vec2(d.x,0.)).rgb+texture2D(tDiffuse,uv-vec2(d.x,0.)).rgb+texture2D(tDiffuse,uv+vec2(0.,d.y)).rgb+texture2D(tDiffuse,uv-vec2(0.,d.y)).rgb)*.15;
+  gl_FragColor=vec4(c,.19);
+ }`;
+ const renderReflection=reflection.onBeforeRender;
+ reflection.onBeforeRender=function(...args){
+  if(!reflectionDirty)return;reflectionDirty=false;
+  const hidden=[...clouds,...particleObjects].map(o=>[o,o.visible]);hidden.forEach(([o])=>o.visible=false);
+  renderReflection.apply(this,args);hidden.forEach(([o,v])=>o.visible=v);reflectionFrames++;
+ };
+ scene.add(reflection);
+}
+const ao=THREE.SAOPass&&THREE.SAOShader&&THREE.DepthLimitedBlurShader&&THREE.UnpackDepthRGBAShader?new THREE.SAOPass(scene,camera,false,false):null;
+if(ao)Object.assign(ao.params,{saoIntensity:.18,saoScale:2000,saoKernelRadius:22,saoBias:.35,saoMinResolution:.00002,saoBlurRadius:3,saoBlurStdDev:2,saoBlurDepthCutoff:.0004});
+const sampled=document.createElement('canvas');sampled.width=sampled.height=1;const sc=sampled.getContext('2d',{willReadFrequently:true});
+function cssColor(name){const el=document.createElement('span');el.style.color='var('+name+')';root.append(el);sc.fillStyle=getComputedStyle(el).color;el.remove();sc.fillRect(0,0,1,1);const p=sc.getImageData(0,0,1,1).data;return new THREE.Color(p[0]/255,p[1]/255,p[2]/255).convertSRGBToLinear();}
+let palette,envTarget;const materialCache=new Map(),geometryCache=new Map(),dynamicGeometry=[];
+const pmrem=new THREE.PMREMGenerator(renderer);
+const grainData=new Uint8Array(256*256);for(let y=0;y<256;y++)for(let x=0;x<256;x++)grainData[y*256+x]=Math.round(160+18*Math.sin(y*6.7)+6*Math.sin(x*17+y*31));
+const grain=new THREE.DataTexture(grainData,256,256,THREE.LuminanceFormat);grain.wrapS=grain.wrapT=THREE.RepeatWrapping;grain.repeat.set(4,4);grain.needsUpdate=true;
+function theme(){
+ const bg=cssColor('--background'),fg=cssColor('--foreground'),lum=c=>.2126*c.r+.7152*c.g+.0722*c.b;
+ const bright=lum(bg)>lum(fg)?bg:fg,dark=lum(bg)>lum(fg)?fg:bg;
+ palette={bg,fg,bright,dark,brass:cssColor('--yellow').lerp(cssColor('--orange'),.18).lerp(bright,.12),steel:bright.clone().lerp(dark,.32),board:cssColor('--orange').lerp(dark,.65),pcb:cssColor('--green').lerp(dark,.65),wireA:cssColor('--blue'),wireB:cssColor('--red'),wireC:bright.clone().lerp(dark,.15),insulator:dark.clone().lerp(bright,.035),ion:cssColor('--viz-series-6'),single:cssColor('--viz-series-2')};
+ key.color.copy(bright).lerp(cssColor('--orange'),.035);rim.color.copy(bright).lerp(cssColor('--blue'),.065);fill.color.copy(bright);
+ const isDark=lum(bg)<lum(fg),floorTone=bg.clone().lerp(isDark?bright:dark,isDark?.045:.07);
+ floorMaterial.color.copy(floorTone);displayMaterial.color.copy(dark).lerp(bright,.075);
+ scene.fog=new THREE.Fog(floorTone,900,3500);
+ const back=document.createElement('canvas');back.width=back.height=512;const bc=back.getContext('2d'),asCss=c=>c.clone().convertLinearToSRGB().getStyle();
+ bc.fillStyle=asCss(floorTone);bc.fillRect(0,0,512,512);
+ backdropTexture?.dispose();backdropTexture=new THREE.CanvasTexture(back);backdropTexture.encoding=THREE.sRGBEncoding;scene.background=backdropTexture;
+ // Small local studio environment: PMREM provides roughness-aware metal reflections.
+ const faces=[];
+ for(let side=0;side<6;side++){
+  const c=document.createElement('canvas');c.width=c.height=256;const ctx=c.getContext('2d'),toCss=t=>t.clone().convertLinearToSRGB().getStyle();
+  const grad=ctx.createLinearGradient(0,0,256,256);grad.addColorStop(0,toCss(dark.clone().lerp(bright,.16)));grad.addColorStop(.45,toCss(dark.clone().lerp(bright,.025)));grad.addColorStop(1,toCss(dark.clone().lerp(bright,.3)));ctx.fillStyle=grad;ctx.fillRect(0,0,256,256);
+  if(side===0||side===2||side===4){
+   const x=side===2?20:148,w=side===2?216:42,g=ctx.createLinearGradient(x-12,0,x+w+12,0);g.addColorStop(0,toCss(dark.clone().lerp(bright,.1)));g.addColorStop(.12,toCss(bright));g.addColorStop(.88,toCss(bright));g.addColorStop(1,toCss(dark.clone().lerp(bright,.1)));ctx.fillStyle=g;ctx.fillRect(x-12,16,w+24,side===2?64:224);
+  }
+  faces.push(c);
+ }
+ const cube=new THREE.CubeTexture(faces);cube.needsUpdate=true;cube.encoding=THREE.sRGBEncoding;
+ const old=envTarget;envTarget=pmrem.fromCubemap(cube);scene.environment=envTarget.texture;cube.dispose();old?.dispose();
+ for(const [name,m] of materialCache){m.color.copy(palette[m.userData.token]);if(name==='brass')m.color.lerp(palette.dark,.12);if(m.emissive)m.emissive.copy(m.userData.token==='ion'||m.userData.token==='single'?palette[m.userData.token]:palette.dark);}
+ for(const c of clouds)paintCloud(c);
+ if(beamShader){beamShader.uniforms.ion.value.copy(palette.ion);beamShader.uniforms.single.value.copy(palette.single);}
+ const lines=particleObjects.find(o=>o.isLineSegments);if(lines){const a=lines.geometry.attributes.color;traces.forEach((t,row)=>{for(let i=0;i<126;i++)a.setXYZ(row*126+i,...palette[t.type].toArray());});a.needsUpdate=true;}
+ renderer.shadowMap.needsUpdate=true;invalidate();
+}
+function material(name){
+ if(materialCache.has(name))return materialCache.get(name);
+ const settings={brass:['brass',1,.29],steel:['steel',1,.26],paint:['steel',.05,.55],board:['board',.15,.57],pcb:['pcb',.05,.44],wireA:['wireA',0,.4],wireB:['wireB',0,.4],wireC:['wireC',0,.45],insulator:['insulator',.1,.43],ion:['ion',0,.3],single:['single',0,.3]};
+ const [token,metalness,roughness]=settings[name];const m=new THREE.MeshPhysicalMaterial({color:palette[token],metalness,roughness,envMapIntensity:1.8,clearcoat:name==='insulator'||name==='pcb'?.3:0,clearcoatRoughness:.28});m.userData.token=token;
+ if(name==='brass'||name==='steel'){m.bumpMap=grain;m.bumpScale=.0015;m.roughnessMap=grain;}
+ if(name==='brass')m.color.lerp(palette.dark,.12);if(name==='ion'||name==='single'){m.emissive.copy(palette[token]);m.emissiveIntensity=.65;}
+ materialCache.set(name,m);return m;
+}
+function geometry(name,create){if(!geometryCache.has(name))geometryCache.set(name,create());return geometryCache.get(name);}
+const cylinderGeo=geometry('cylinder',()=>new THREE.CylinderGeometry(1,1,1,16)),boxGeo=geometry('box',()=>new THREE.BoxGeometry(1,1,1));
+// Fig. S1 manufacturing drawing supersedes the slightly different simulation defaults.
+const pitch=8.3,diameter=6.34,collarLength=1,collarRadius=1.9,threadLength=6.34,boardThickness=1.5,boardPlane=4.5*pitch+diameter/2+collarLength;
+const boltGeo=geometry('bolt',()=>new THREE.CylinderGeometry(1,1,1,6));
+const nutGeo=geometry('hex-nut',()=>{const s=new THREE.Shape();for(let i=0;i<6;i++){const a=i*Math.PI/3;if(i)s.lineTo(Math.cos(a),Math.sin(a));else s.moveTo(1,0);}s.closePath();const h=new THREE.Path();h.absarc(0,0,.57,0,Math.PI*2,true);s.holes.push(h);const g=new THREE.ExtrudeGeometry(s,{depth:1,bevelEnabled:true,bevelThickness:.06,bevelSize:.035,bevelSegments:1,curveSegments:12});g.translate(0,0,-.5);g.rotateX(-Math.PI/2);return g;});
+const washerGeo=geometry('steel-washer',()=>new THREE.LatheGeometry([[.56,-.5],[1,-.5],[1,.5],[.56,.5],[.56,-.5]].map(p=>new THREE.Vector2(...p)),20));
+const threadGeo=geometry('4-40-thread',()=>{const helix=new THREE.Curve();helix.getPoint=t=>new THREE.Vector3(1.32*Math.cos(t*threadLength/.635*Math.PI*2),(t-.5)*threadLength,1.32*Math.sin(t*threadLength/.635*Math.PI*2));return new THREE.TubeGeometry(helix,120,.12,3,false);});
+const electrodeGeo=geometry('complete-electrode',()=>{
+ const body=new THREE.LatheGeometry([[0,-3.17],[2.99,-3.17],[3.17,-2.99],[3.17,2.99],[2.99,3.17],[1.9,3.17],[1.9,4.17],[1.24,4.17],[1.24,10.51],[0,10.51]].map(p=>new THREE.Vector2(...p)),28),thread=threadGeo.clone().translate(0,7.34,0);
+ const merged=THREE.BufferGeometryUtils.mergeBufferGeometries([body,thread]);body.dispose();thread.dispose();return merged;
+});
+let batches=new Map(),movable=[],pickables=[],clouds=[],traces=[],particleObjects=[],hardwareCount=0,beamTexture=null,beamShader=null;
+const particleFragment=`varying vec3 tint; void main(){float r=length(gl_PointCoord-.5);float alpha=1.-smoothstep(.25,.5,r);if(alpha<.03)discard;gl_FragColor=vec4(tint,alpha*.9);\n#include <tonemapping_fragment>\n#include <encodings_fragment>\n}`;
+function particleMaterial(vertex,uniforms={}){return new THREE.ShaderMaterial({uniforms:{time:{value:0},...uniforms},vertexShader:vertex,fragmentShader:particleFragment,transparent:true,depthWrite:false});}
+const dummy=new THREE.Object3D(),up=new THREE.Vector3(0,1,0),normal=new THREE.Vector3();
+// Every repeated part is an instance. Geometry and materials survive assembly switches.
+function part(geo,name,parent,pos,scale=[1,1,1],quat=null,kind='all'){
+ const key=parent.id+'/'+geo.id+'/'+name+'/'+kind;let batch=batches.get(key);
+ if(!batch){batch={geo,name,parent,kind,matrices:[]};batches.set(key,batch);}
+ dummy.position.set(...pos);dummy.scale.set(...scale);dummy.quaternion.copy(quat||new THREE.Quaternion());dummy.updateMatrix();batch.matrices.push(dummy.matrix.clone());
+}
+function rod(a,b,r,name='steel',parent=instrument,kind='channels'){
+ const p=new THREE.Vector3(...a),q=new THREE.Vector3(...b),v=q.clone().sub(p),rotation=new THREE.Quaternion().setFromUnitVectors(up,v.clone().normalize());
+ part(cylinderGeo,name,parent,p.add(q).multiplyScalar(.5).toArray(),[r,v.length(),r],rotation,kind);
+}
+function box(pos,size,name='steel',parent=instrument,kind='frame'){part(boxGeo,name,parent,pos,size,null,kind);}
+function commit(){
+ for(const b of batches.values()){
+  const m=new THREE.InstancedMesh(b.geo,material(b.name),b.matrices.length);b.matrices.forEach((v,i)=>m.setMatrixAt(i,v));m.instanceMatrix.needsUpdate=true;m.castShadow=true;m.receiveShadow=true;m.frustumCulled=false;m.userData.kind=b.kind;b.parent.add(m);pickables.push(m);hardwareCount+=b.matrices.length;
+ }
+ batches.clear();
+}
+function plate(axis,ports=0){return geometry('plate-'+axis+'-'+ports,()=>{
+ const nx=axis===0?8:10,ny=axis===2?10:8,w=nx*pitch/2,h=ny*pitch/2;
+ const shape=new THREE.Shape();shape.moveTo(-w,-h);shape.lineTo(w,-h);shape.lineTo(w,h);shape.lineTo(-w,h);shape.closePath();
+ for(let i=0;i<nx;i++)for(let j=0;j<ny;j++){const hole=new THREE.Path();hole.absarc((i-(nx-1)/2)*pitch,(j-(ny-1)/2)*pitch,collarRadius+.12,0,Math.PI*2,true);shape.holes.push(hole);}
+ for(let i=-(ports===9?1:0);i<=(ports===9?1:0);i++)for(let j=-(ports===9?1:0);j<=(ports===9?1:0);j++)if(ports){const hole=new THREE.Path();hole.absarc(i*pitch*2,j*pitch*2,2.4,0,Math.PI*2,true);shape.holes.push(hole);}
+ return new THREE.ExtrudeGeometry(shape,{depth:boardThickness,bevelEnabled:true,bevelThickness:.06,bevelSize:.06,bevelSegments:1,curveSegments:12});
+});}
+function wire(points,name,parent=instrument,kind='wiring',radius=.35){const c=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)));for(let i=0;i<12;i++)rod(c.getPoint(i/12).toArray(),c.getPoint((i+1)/12).toArray(),radius,name,parent,kind);}
+function driveBoard(x,parent=instrument){
+ box([x,0,-30],[1.6,62,18],'pcb',parent,'wiring');
+ for(let i=-4;i<=4;i++){
+  box([x+2,i*6,-24],[3.5,4,4],'insulator',parent,'wiring');
+  rod([x+1,i*6,-35],[x+7,i*6,-35],1.1,'wireA',parent,'wiring');
+  wire([[x+3,i*6,-24],[x+11,i*6,-17],[x+17,i*4,-19],[x+18,i*4,-25]],i%2?'wireB':'wireC',parent);
+  for(const z of [-35,-24]){rod([x+.85,i*6,z],[x+1.05,i*6,z],1.2,'brass',parent,'wiring');rod([x+1,i*6,z],[x+2.1,i*6,z],.55,'steel',parent,'wiring');}
+  rod([x+.9,i*6,-35],[x+.9,i*6,-29],.13,'brass',parent,'wiring');rod([x+.9,i*6,-29],[x+.9,i*6+2,-26],.13,'brass',parent,'wiring');
+ }
+}
+function tandemMount(){
+ // Fig. 1E, 486Q–9q–486Q: continuous round posts and end plates.
+ for(const y of [-48,48])for(const z of [-48,48]){
+  rod([-115,y,z],[115,y,z],2,'steel',instrument,'frame');
+  for(const x of [-109,109])part(threadGeo,'steel',instrument,[x,y,z],[1.5,1,1.5],new THREE.Quaternion().setFromUnitVectors(up,new THREE.Vector3(1,0,0)),'frame');
+  for(const x of [-115,115]){rod([x-2,y,z],[x+2,y,z],4,'steel',instrument,'frame');const q=new THREE.Quaternion().setFromUnitVectors(up,new THREE.Vector3(1,0,0));part(washerGeo,'steel',instrument,[x,y,z],[4.6,.5,4.6],q,'frame');part(nutGeo,'steel',instrument,[x+(x<0?-2.9:2.9),y,z],[3.8,2.3,3.8],q,'frame');}
+ }
+ for(const x of [-113,113]){
+  const shape=new THREE.Shape();shape.moveTo(-50,-52);shape.lineTo(50,-52);shape.quadraticCurveTo(52,-52,52,-50);shape.lineTo(52,50);shape.quadraticCurveTo(52,52,50,52);shape.lineTo(-50,52);shape.quadraticCurveTo(-52,52,-52,50);shape.lineTo(-52,-50);shape.quadraticCurveTo(-52,-52,-50,-52);shape.closePath();const hole=new THREE.Path();hole.absarc(0,0,9,0,Math.PI*2,true);shape.holes.push(hole);
+  for(const y of [-48,48])for(const z of [-48,48]){const h=new THREE.Path();h.absarc(y,z,2.1,0,Math.PI*2,true);shape.holes.push(h);}
+  part(geometry('endplate',()=>new THREE.ExtrudeGeometry(shape,{depth:3,bevelEnabled:true,bevelThickness:.25,bevelSize:.25,bevelSegments:2,curveSegments:16})),'steel',instrument,[x-1.5,0,0],[1,1,1],new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,0,1),new THREE.Vector3(1,0,0)),'frame');
+  for(const y of [-48,48])for(const z of [-48,48])part(boltGeo,'steel',instrument,[x+(x<0?-3:3),y,z],[2.5,2,2.5],new THREE.Quaternion().setFromUnitVectors(up,new THREE.Vector3(1,0,0)),'frame');
+ }
+ driveBoard(-9);driveBoard(10);
+ for(const y of [-38,38])wire([[-58,y,-44],[-29,y+4,-54],[20,y-7,-52],[60,y,-44]],y>0?'wireA':'wireC');
+}
+function singleMount(){
+ // S1 photograph: adjacent exterior guides, gold-colored brackets and a spring-supported base.
+ const bracket=geometry('S1-guide-bracket',()=>{const s=new THREE.Shape();s.moveTo(-15,-50);s.lineTo(15,-50);s.lineTo(15,10);s.lineTo(-15,10);s.closePath();const h=new THREE.Path();h.absarc(0,0,8.5,0,Math.PI*2,true);s.holes.push(h);return new THREE.ExtrudeGeometry(s,{depth:3,bevelEnabled:false,curveSegments:16});});
+ const ring=geometry('S1-guide-ring',()=>new THREE.LatheGeometry([new THREE.Vector2(4,-1),new THREE.Vector2(9,-1),new THREE.Vector2(9,1),new THREE.Vector2(4,1),new THREE.Vector2(4,-1)],24));
+ for(const axis of [0,2]){
+  const n=new THREE.Vector3().setComponent(axis,1),q=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,0,1),n),p=[0,0,0];p[axis]=47;
+  part(bracket,'brass',instrument,p,[1,1,1],q,'frame');
+  for(const t of [51,67]){const at=[0,0,0];at[axis]=t;part(ring,'steel',instrument,at,[1,1,1],new THREE.Quaternion().setFromUnitVectors(up,n),'inlet');}
+  for(const u of [-3,3])for(const v of [-3,3]){const a=[0,u,0],b=[0,u,0];a[axis]=43;b[axis]=70;a[axis===0?2:0]=b[axis===0?2:0]=v;rod(a,b,1.5,'steel',instrument,'inlet');}
+  const a=[0,-49,0];a[axis]=51;box(a,axis===0?[13,3,30]:[30,3,13],'brass');
+ }
+ for(const y of [-53,-62])box([0,y,0],[112,3,112]);
+ const spring=geometry('S1-base-spring',()=>{const c=new THREE.Curve();c.getPoint=t=>new THREE.Vector3(3.4*Math.cos(t*Math.PI*12),(t-.5)*7,3.4*Math.sin(t*Math.PI*12));return new THREE.TubeGeometry(c,72,.45,5,false);});
+ for(const x of [-50,50])for(const z of [-50,50]){part(spring,'steel',instrument,[x,-57.5,z],[1,1,1],null,'frame');rod([x,-64,z],[x,-48,z],1.5,'steel',instrument,'frame');part(boltGeo,'steel',instrument,[x,-50,z],[3,2,3],null,'frame');}
+ beam([[0,0,72],[0,0,45],[0,0,0],[45,0,0],[72,0,0]]);
+}
+function outline(a,b,kind){for(let axis=0;axis<3;axis++)for(const u of [a[(axis+1)%3],b[(axis+1)%3]])for(const v of [a[(axis+2)%3],b[(axis+2)%3]]){const p=a.slice(),q=b.slice();p[(axis+1)%3]=q[(axis+1)%3]=u;p[(axis+2)%3]=q[(axis+2)%3]=v;rod(p,q,.65,'steel',instrument,kind);}}
+function interfaceContext(){
+ // Only topology and pressure regions are documented in Fig. 1E; shapes are schematic.
+ outline([-165,-17,-17],[-107,17,17],'vacuum');
+ outline([-108,-56,-56],[113,56,56],'vacuum');
+ rod([-172,0,0],[-161,0,0],.5,'steel',instrument,'source');
+ beam([[-174,0,0],[-162,0,0],[-152,0,0]]);
+ box([134,0,0],[10,23,23],'steel',instrument,'valve');
+ box([134,23,0],[22,18,16],'insulator',instrument,'valve');
+ rod([134,11,0],[134,16,0],2,'steel',instrument,'valve');
+ outline([145,-44,-40],[250,44,40],'analyzer');
+ qset(147,210,0,0,2.3,10,'analyzer');
+ beam([[130,0,0],[152,0,0],[204,0,0],[229,0,0]]);
+}
+function photographedRig(){
+ // Supplied bench photograph: visible exterior only. All dimensions are estimated.
+ // ponytail: hidden trap configuration is unknown; retain the separately sourced core views.
+ const tube=geometry('bench-open-tube',()=>new THREE.CylinderGeometry(1,1,1,48,1,true));
+ const ring=geometry('bench-annulus',()=>new THREE.LatheGeometry([[.72,-.5],[1,-.5],[1,.5],[.72,.5],[.72,-.5]].map(p=>new THREE.Vector2(...p)),48));
+ const slot=geometry('bench-T-slot',()=>{
+  const edge=[[12,12],[3,12],[3,9],[6,9],[6,6],[-6,6],[-6,9],[-3,9],[-3,12],[-12,12]],s=new THREE.Shape();
+  for(let q=0;q<4;q++)for(let j=0;j<edge.length;j++){const a=q*Math.PI/2,x=edge[j][0]*Math.cos(a)-edge[j][1]*Math.sin(a),y=edge[j][0]*Math.sin(a)+edge[j][1]*Math.cos(a);if(!q&&!j)s.moveTo(x,y);else s.lineTo(x,y);}s.closePath();
+  const h=new THREE.Path();h.absarc(0,0,3,0,Math.PI*2,true);s.holes.push(h);return new THREE.ExtrudeGeometry(s,{depth:1,bevelEnabled:false,curveSegments:8});
+ });
+ const along=axis=>new THREE.Quaternion().setFromUnitVectors(up,new THREE.Vector3().setComponent(axis,1));
+ function rail(a,b){const p=new THREE.Vector3(...a),v=new THREE.Vector3(...b).sub(p);part(slot,'steel',instrument,a,[1,1,v.length()],new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,0,1),v.normalize()),'labframe');}
+ function flange(p,axis,r,h,kind){
+  part(ring,'steel',instrument,p,[r,h,r],along(axis),kind);
+  for(let i=0;i<12;i++){const a=i*Math.PI/6,b=p.slice();b[(axis+1)%3]+=Math.cos(a)*r*.87;b[(axis+2)%3]+=Math.sin(a)*r*.87;b[axis]+=h/2+1.4;part(boltGeo,'steel',instrument,b,[2.5,2.8,2.5],along(axis),kind);}
+ }
+ function hose(points,r,name){
+  wire(points,name,instrument,'hoses',r*.86);
+  const c=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p))),rib=geometry('bench-hose-rib',()=>new THREE.TorusGeometry(1,.12,4,12));
+  for(let i=0;i<65;i++)part(rib,name,instrument,c.getPoint(i/64).toArray(),[r,r,r],new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,0,1),c.getTangent(i/64)),'hoses');
+ }
+ // Slotted rails, cross-members, brackets, fasteners and adjustable supports.
+ for(const x of [52,284])rail([x,-65,-200],[x,-65,280]);
+ for(const z of [-170,105])rail([25,-65,z],[390,-65,z]);
+ rail([52,-65,255],[284,-65,255]);
+ for(const x of [52,284])for(const z of [-170,105]){
+  rail([x,-255,z],[x,-65,z]);
+  box([x,-56,z],[42,5,44],'steel',instrument,'labframe');
+  for(const dx of [-14,14])part(boltGeo,'steel',instrument,[x+dx,-52,z],[3,3,3],null,'labframe');
+  rod([x,-274,z],[x,-254,z],5,'steel',instrument,'labframe');rod([x,-280,z],[x,-274,z],16,'insulator',instrument,'labframe');
+ }
+ box([-70,-47,80],[318,4,375],'steel',instrument,'labframe');
+ // Central box-shaped custom chamber; its covered interior is deliberately empty.
+ for(const x of [-163,124])box([x,61,-22],[6,182,210],'steel',instrument,'chamber');
+ for(const y of [-30,152])box([-19.5,y,-22],[293,6,210],'steel',instrument,'chamber');
+ for(const z of [-127,83])box([-19.5,61,z],[293,182,6],'steel',instrument,'chamber');
+ for(const x of [-156,117])for(const y of [-22,144])part(boltGeo,'steel',instrument,[x,y,88],[4,3,4],along(2),'chamber');
+ for(const x of [-156,-88,-20,48,117])for(const z of [-119,75])part(boltGeo,'steel',instrument,[x,157,z],[3.4,3,3.4],null,'chamber');
+ for(const z of [-115,-67,-19,29,75])for(const y of [-20,140])part(boltGeo,'steel',instrument,[129,y,z],[3.2,3,3.2],along(0),'chamber');
+ for(const z of [-119,75])box([-19.5,166,z],[293,24,5],'steel',instrument,'chamber');
+ // Side connection to the large cabinet visible on the left of the photograph.
+ box([-362,80,35],[286,790,300],'paint',instrument,'cabinet');
+ box([-216,30,35],[8,585,290],'paint',instrument,'cabinet');
+ for(const y of [-210,-202,-194,-186])box([-211,y,126],[1,3,80],'insulator',instrument,'cabinet');
+ box([-210,305,108],[2,100,90],'insulator',instrument,'cabinet');
+ box([-208,305,108],[1,87,76],'wireB',instrument,'cabinet');
+ part(tube,'steel',instrument,[-188,65,45],[58,50,58],along(0),'flanges');
+ flange([-215,65,45],0,78,9,'flanges');flange([-162,65,45],0,70,8,'flanges');
+ rod([-190,11,94],[-190,47,94],4,'steel',instrument,'flanges');
+ // Circular-front Thermo housing, external probe/fittings and top cylindrical device.
+ const front=geometry('bench-source-face',()=>{const s=new THREE.Shape();s.moveTo(-69,-82);s.lineTo(69,-82);s.lineTo(69,82);s.lineTo(-69,82);s.closePath();const h=new THREE.Path();h.absarc(0,13,48,0,Math.PI*2,true);s.holes.push(h);return new THREE.ExtrudeGeometry(s,{depth:6,bevelEnabled:true,bevelThickness:1,bevelSize:1,bevelSegments:1,curveSegments:48});});
+ part(front,'paint',instrument,[-20,38,200],[1,1,1],null,'sourcehousing');
+ for(const x of [-89,49])box([x,38,178],[6,164,44],'paint',instrument,'sourcehousing');
+ for(const y of [-44,120])box([-20,y,178],[144,6,44],'paint',instrument,'sourcehousing');
+ part(tube,'steel',instrument,[-20,51,113],[63,166,63],along(2),'sourcehousing');
+ flange([-20,51,29],2,66,6,'sourcehousing');
+ box([-20,51,24],[146,154,6],'steel',instrument,'sourcehousing');
+ for(const x of [-80,40])for(const y of [-13,115])part(boltGeo,'steel',instrument,[x,y,31],[4.5,4,4.5],along(2),'sourcehousing');
+ part(tube,'steel',instrument,[-20,51,171],[49,58,49],along(2),'sourcehousing');
+ flange([-20,51,206],2,52,5,'sourcehousing');
+ part(ring,'steel',instrument,[-20,51,119],[36,4,36],along(2),'sourcehousing');
+ // Only fittings visible in the opening are represented; no unseen ion path is invented.
+ rod([-52,8,219],[-13,51,165],3,'steel',instrument,'probe');
+ rod([-49,12,221],[-52,41,221],4,'insulator',instrument,'probe');
+ for(const p of [[-53,9,222],[-39,27,199],[-17,46,173]])part(boltGeo,'brass',instrument,p,[5,6,5],along(2),'probe');
+ box([-60,-13,209],[28,13,3],'insulator',instrument,'sourcehousing');
+ box([-60,-13,212],[22,8,1],'wireA',instrument,'sourcehousing');
+ for(const x of [-88,48])part(boltGeo,'insulator',instrument,[x,35,208],[6,6,6],along(2),'sourcehousing');
+ rod([-20,121,153],[-20,143,153],27,'insulator',instrument,'topdevice');
+ rod([-20,143,153],[-20,219,153],15,'insulator',instrument,'topdevice');
+ part(geometry('bench-device-dome',()=>new THREE.SphereGeometry(1,20,12,0,Math.PI*2,0,Math.PI/2)),'insulator',instrument,[-20,219,153],[15,15,15],null,'topdevice');
+ flange([-20,144,153],1,23,5,'topdevice');
+ wire([[-20,233,153],[-18,243,160],[14,228,186],[35,133,232],[69,-29,230]],'insulator',instrument,'hoses',2.5);
+ // Exterior connector bank and colored leads on the chamber's right side.
+ box([145,40,-14],[18,86,81],'insulator',instrument,'terminalbank');
+ for(let j=0;j<11;j++)for(let k=0;k<3;k++){
+  const y=5+j*7,z=-43+k*28,wave=Math.sin(j*2.8+k*4);
+  rod([154,y,z],[167,y,z],2.8,k===1?'wireB':'wireA',instrument,'terminalbank');
+  part(boltGeo,'brass',instrument,[169,y,z],[3,3,3],along(0),'terminalbank');
+  wire([[172,y,z],[188,y+wave*12,z+21],[216,y+8+wave*9,z+30],[230+k*10,y+12+j*.7,z-15]],['wireB','wireA','pcb'][k],instrument,'terminalbank',.8);
+ }
+ // Three stacked vented equipment boxes are visible; their makes/models are unreadable.
+ for(let i=0;i<3;i++){
+  const y=52+i*109;
+  box([186,y,-227],[225,99,200],'paint',instrument,'electronics');
+  box([186,y-52,-227],[225,5,200],'insulator',instrument,'electronics');
+  for(let r=0;r<5;r++)for(let c=0;c<11;c++)box([87+c*17,y-26+r*8,-125],[12,2,1],'insulator',instrument,'electronics');
+  for(const x of [150,183,260])rod([x,y+16,-128],[x,y+16,-121],3.5,'insulator',instrument,'electronics');
+  box([112,y+18,-123],[28,14,2],'insulator',instrument,'electronics');
+ }
+ // Partly visible cylindrical hardware and corrugated lines below the platform.
+ rod([12,-151,132],[12,-49,132],47,'steel',instrument,'underbody');
+ flange([12,-61,132],1,54,10,'underbody');
+ rod([12,-186,132],[12,-154,132],42,'insulator',instrument,'underbody');
+ for(let i=0;i<10;i++)part(ring,'steel',instrument,[12,-176+i*2,132],[44,1.2,44],null,'underbody');
+ hose([[28,-168,178],[94,-190,168],[158,-214,170],[278,-233,223]],8,'board');
+ hose([[-85,31,219],[-146,4,241],[-212,-8,266],[-325,-25,295]],4.5,'wireC');
+ // Separate blue enclosure and visible surrounding support posts.
+ box([350,-140,170],[110,150,105],'wireA',instrument,'auxbox');
+ box([350,-61,170],[114,6,108],'steel',instrument,'auxbox');
+ for(let x=306;x<=393;x+=7)for(let z=131;z<=207;z+=8)box([x,-57,z],[3,1,4],'insulator',instrument,'auxbox');
+ rod([321,-140,223],[321,-140,229],4,'insulator',instrument,'auxbox');
+ rod([362,-164,223],[362,-164,231],15,'insulator',instrument,'auxbox');
+ for(const x of [-140,418]){
+  const radius=x>0?22:13;rod([x,-370,290],[x,550,290],radius,'paint',instrument,'labframe');
+  for(const y of [-62,199])rod([x,y-3,290],[x,y+3,290],radius+5,'steel',instrument,'labframe');
+ }
+ for(let i=0;i<7;i++)wire([[293+i*2,350,-100],[301+i*3,220,-66],[312+i*3,6,-16],[312+i*2,-250,42]],['wireB','wireA','insulator','board'][i%4],instrument,'terminalbank',1.1);
+ root.dataset.photoGeometry='exterior';root.dataset.hiddenConfiguration='unverified';
+}
+function paintCloud(c){c.material.uniforms.tint.value.copy(palette.ion).lerp(new THREE.Color(0x75e8e2).convertSRGBToLinear(),.45);}
+function gasCloud(parent){
+ // Twelve translucent billboards approximate a volume; this is illustrative, not solver density.
+ const geo=geometry('gas-wisps',()=>{
+  const plane=new THREE.PlaneGeometry(1,1),g=new THREE.InstancedBufferGeometry();g.index=plane.index;g.attributes=plane.attributes;
+  const centers=[],phases=[],sizes=[];
+  for(let i=0;i<12;i++){const a=i*2.39996,z=1-2*(i+.5)/12,r=Math.sqrt(1-z*z);centers.push(12*r*Math.cos(a),12*z,12*r*Math.sin(a));phases.push(i*1.71);sizes.push(48+4*Math.sin(i*2.1));}
+  g.setAttribute('center',new THREE.InstancedBufferAttribute(new Float32Array(centers),3));g.setAttribute('phase',new THREE.InstancedBufferAttribute(new Float32Array(phases),1));g.setAttribute('diameter',new THREE.InstancedBufferAttribute(new Float32Array(sizes),1));g.instanceCount=12;return g;
+ });
+ const mat=new THREE.ShaderMaterial({uniforms:{time:{value:0},tint:{value:new THREE.Color()}},transparent:true,depthWrite:false,depthTest:true,
+  vertexShader:`uniform float time;attribute vec3 center;attribute float phase;attribute float diameter;varying vec2 cloudUV;varying float seed;
+  void main(){seed=phase;cloudUV=uv;vec3 drift=1.6*sin(vec3(time*.35+phase)+vec3(0.,2.,4.));vec4 view=modelViewMatrix*vec4(center+drift,1.);view.xy+=position.xy*diameter*(1.+.05*sin(time*.6+phase));gl_Position=projectionMatrix*view;}`,
+  fragmentShader:`uniform float time;uniform vec3 tint;varying vec2 cloudUV;varying float seed;
+  float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+  float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),mix(hash(i+vec2(0.,1.)),hash(i+1.),f.x),f.y);}
+  void main(){vec2 q=(cloudUV-.5)*2.;float radius=dot(q,q);if(radius>1.)discard;
+   float t=time*.17;vec2 p=q*2.8+vec2(seed,t);p+=.45*vec2(sin(q.y*3.+t+seed),cos(q.x*3.-t));
+   float n=.6*noise(p)+.3*noise(p*2.1-vec2(t,.7*t))+.1*noise(p*4.2);
+   float alpha=exp(-1.8*radius)*(1.-smoothstep(.65,1.,radius))*(.22+.60*n*n);
+   gl_FragColor=vec4(tint*(.8+.35*n),alpha);
+   #include <tonemapping_fragment>
+   #include <encodings_fragment>
+  }`});
+ const mesh=new THREE.Mesh(geo,mat);mesh.userData.gasCloud=true;mesh.frustumCulled=false;parent.add(mesh);clouds.push(mesh);paintCloud(mesh);
+}
+
+function trap(center,outputPorts=9,inputPorts=1,inputAxis=0){
+ const g=new THREE.Group();g.position.set(...center);instrument.add(g);const faces=[];
+ for(let axis=0;axis<3;axis++)for(const sign of [-1,1]){
+  const f=new THREE.Group();g.add(f);f.userData={axis,sign};faces.push(f);const n=new THREE.Vector3();n.setComponent(axis,sign);movable.push({g:f,n,base:f.position.clone()});
+  const pg=new THREE.Group();pg.position.copy(n).multiplyScalar(boardPlane);pg.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),n);f.add(pg);
+  const ports=axis===0&&sign===1?outputPorts:axis===inputAxis&&sign===(inputAxis===0?-1:1)?inputPorts:0;
+  part(plate(axis,ports),'insulator',pg,[0,0,0],[1,1,1],null,'wall');
+  part(plate(axis,ports),'brass',pg,[0,0,-.04],[1,1,.02],null,'wall');
+  // Gold-colored pads and alternating diagonal traces are visible on the exterior PCB.
+  const nx=axis===0?8:10,ny=axis===2?10:8;
+  const pad=geometry('pcb-pad',()=>new THREE.TorusGeometry(2.65,.23,4,12));
+  for(let i=0;i<nx;i++)for(let j=0;j<ny;j++){
+   const x=(i-(nx-1)/2)*pitch,y=(j-(ny-1)/2)*pitch;
+   part(pad,'brass',pg,[x,y,1.6],[1,1,1],null,'wall');
+   if(i<nx-1&&j<ny-1)rod([x+2.1,y+2.1,1.6],[x+pitch-2.1,y+pitch-2.1,1.6],.14,'brass',pg,'wall');
+  }
+  for(let i=0;i<5;i++){
+   const t=-30+i*14;
+   const edge=ny*pitch/2;
+   wire([[t,edge,1.7],[t+2,edge+6,5],[t+10,edge+7,10],[t+12,edge,8]],i%2?'wireC':'wireA',pg);
+   rod([t,edge,1.8],[t,edge+3,1.8],.55,'brass',pg,'wall');
+  }
+  for(const x of [-nx*pitch/2+2,nx*pitch/2-2])for(const y of [-ny*pitch/2+2,ny*pitch/2-2]){
+   part(boltGeo,'steel',pg,[x,y,2.2],[1.65,1.7,1.65],new THREE.Quaternion().setFromUnitVectors(up,new THREE.Vector3(0,0,1)),'frame');
+   part(cylinderGeo,'insulator',pg,[x,y,1.2],[2.2,.65,2.2],new THREE.Quaternion().setFromUnitVectors(up,new THREE.Vector3(0,0,1)),'frame');
+  }
+ }
+ let count=0;
+ for(let i=0;i<10;i++)for(let j=0;j<10;j++)for(let k=0;k<10;k++){
+  if(i>0&&i<9&&j>0&&j<9&&k>0&&k<9)continue;
+  const axis=k===0||k===9?2:j===0||j===9?1:0,sign=[i,j,k][axis]===0?-1:1,f=faces[axis*2+(sign>0?1:0)],pos=[(i-4.5)*pitch,(j-4.5)*pitch,(k-4.5)*pitch];
+  normal.set(0,0,0).setComponent(axis,sign);const q=new THREE.Quaternion().setFromUnitVectors(up,normal);
+  part(electrodeGeo,'steel',f,pos,[1,1,1],q,'trap');
+  const face=pos.slice();face[axis]=sign*(boardPlane+boardThickness+.35);part(washerGeo,'steel',f,face,[2.4,.35,2.4],q,'wall');face[axis]=sign*(boardPlane+boardThickness+1.2);part(nutGeo,'steel',f,face,[2.1,1.4,2.1],q,'wall');count++;
+ }
+ if(count!==488)throw new Error('486Q requires 488 unique shell electrodes');
+ root.dataset.electrodes='488';root.dataset.faceCounts='64,64,80,80,100,100';root.dataset.pitch=String(pitch);root.dataset.electrodeDiameter=String(diameter);
+ // Mounting frame follows the prototype photographs; its dimensions are schematic.
+ for(let axis=0;axis<3;axis++)for(const a of [-44,44])for(const b of [-44,44]){const p=[0,0,0],s=[2,2,2];p[(axis+1)%3]=a;p[(axis+2)%3]=b;s[axis]=91;box(p,s,'steel',g);}
+ gasCloud(g);return g;
+}
+function qset(x1,x2,y,z,r=1,spacing=3,kind='channels',tilt=0){for(const dy of [-spacing/2,spacing/2])for(const dz of [-spacing/2,spacing/2])rod([x1,y+dy,z+dz],[x2,y+dy+(dy>0?tilt*(x2-x1):0),z+dz],r,'steel',instrument,kind);}
+function beam(points,type='ion'){
+ traces.push({curve:new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p))),type});
+}
+function beamParticles(){
+ if(!traces.length)return;
+ const n=traces.length,data=new Float32Array(64*n*4),vertices=[],colors=[],offset=[],rows=[],species=[],count=16;
+ traces.forEach((t,row)=>{for(let i=0;i<64;i++){const p=t.curve.getPointAt(i/63);data.set([p.x,p.y,p.z,1],(row*64+i)*4);if(i>0){vertices.push(...t.curve.getPointAt((i-1)/63).toArray(),...p.toArray());colors.push(...palette[t.type].toArray(),...palette[t.type].toArray());}}for(let i=0;i<count;i++){offset.push(i/count);rows.push((row+.5)/n);species.push(t.type==='single'?1:0);}});
+ beamTexture=new THREE.DataTexture(data,64,n,THREE.RGBAFormat,THREE.FloatType);beamTexture.needsUpdate=true;
+ const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(new Float32Array(n*count*3),3));geo.setAttribute('offset',new THREE.Float32BufferAttribute(offset,1));geo.setAttribute('row',new THREE.Float32BufferAttribute(rows,1));geo.setAttribute('species',new THREE.Float32BufferAttribute(species,1));dynamicGeometry.push(geo);
+ beamShader=particleMaterial(`uniform float time;uniform sampler2D paths;uniform vec3 ion;uniform vec3 single;attribute float offset;attribute float row;attribute float species;varying vec3 tint;void main(){float index=fract(time*.19+offset)*63.;float a=floor(index);vec3 p=mix(texture2D(paths,vec2((a+.5)/64.,row)).xyz,texture2D(paths,vec2((min(a+1.,63.)+.5)/64.,row)).xyz,fract(index));tint=mix(ion,single,species);gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);gl_PointSize=4.5;}`,{paths:{value:beamTexture},ion:{value:palette.ion},single:{value:palette.single}});
+ const dots=new THREE.Points(geo,beamShader);dots.frustumCulled=false;instrument.add(dots);particleObjects.push(dots);
+ const lines=new THREE.BufferGeometry();lines.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));lines.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));dynamicGeometry.push(lines);const line=new THREE.LineSegments(lines,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:.4}));instrument.add(line);particleObjects.push(line);
+}
+function inlet(x){qset(x-35,x-5,0,0,1.5,6,'inlet');rod([x-58,0,0],[x-36,0,0],2.6,'steel',instrument,'inlet');for(const t of [x-37,x-42])rod([t-.6,0,0],[t+.6,0,0],5.5,'steel',instrument,'inlet');beam([[x-56,0,0],[x-32,0,0],[x+18,0,0]]);}
+function connect(x1,x2){
+ const gateGeo=geometry('channel-gate',()=>{const s=new THREE.Shape();s.absarc(0,0,3.4,0,Math.PI*2,false);const h=new THREE.Path();h.absarc(0,0,1.4,0,Math.PI*2,true);s.holes.push(h);return new THREE.ExtrudeGeometry(s,{depth:.8,bevelEnabled:false,curveSegments:8});});
+ for(let r=-1;r<=1;r++)for(let c=-1;c<=1;c++){
+  const y=r*pitch*2,z=c*pitch*2;
+  qset(x1,Math.min(x1+12,x2),y,z,1,3,'channels',.01);
+  part(gateGeo,'steel',instrument,[x1+12.4,y,z],[1,1,1],new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,0,1),new THREE.Vector3(1,0,0)),'gate');
+  if(x2-x1>15)qset(x1+14,x2,y,z,1,3,'channels');
+  beam([[x1-8,y,z],[x1,y,z],[x2,y,z],[x2+9,y,z]],(r+c)%3?'ion':'single');
+ }
+}
+function powerSupply(){
+ // S2 documents the circuit, not its physical layout. Component placement is illustrative.
+ box([-106,-32,0],[39,3,35],'pcb',instrument,'converter');
+ box([-113,-24,0],[22,13,18],'insulator',instrument,'converter');
+ box([-88,-26,0],[7,8,12],'steel',instrument,'converter');
+ for(const z of [-13,13])box([-94,-28,z],[10,6,5],'wireA',instrument,'converter');
+ // Amidon T200A-2: 50.8 mm OD, 31.75 mm ID, 25.4 mm height.
+ const core=geometry('T200A-2',()=>new THREE.LatheGeometry([new THREE.Vector2(15.875,-12.7),new THREE.Vector2(25.4,-12.7),new THREE.Vector2(25.4,12.7),new THREE.Vector2(15.875,12.7),new THREE.Vector2(15.875,-12.7)],48));
+ part(core,'wireB',instrument,[-37,-15,0],[1,1,1],null,'transformer');
+ function winding(turns,baseAngle,span,name){
+  const corners=[[15,-13.8],[26.4,-13.8],[26.4,13.8],[15,13.8],[15,-13.8]];
+  for(let turn=0;turn<turns;turn++)for(let j=0;j<4;j++)for(let k=0;k<2;k++){
+   const point=t=>{const f=(k+t)/2,r=THREE.MathUtils.lerp(corners[j][0],corners[j+1][0],f),y=THREE.MathUtils.lerp(corners[j][1],corners[j+1][1],f),a=baseAngle+span*(turn+(j+f)/4)/turns;return [-37+r*Math.cos(a),-15+y,r*Math.sin(a)];};
+   rod(point(0),point(1),.22,name,instrument,'transformer');
+  }
+ }
+ winding(128,.2,Math.PI*1.65,'brass');winding(4,Math.PI*1.82,.3,'wireA');
+ box([1,-25,-15],[8,10,2],'insulator',instrument,'switch');
+ for(const z of [-17,-15,-13])rod([1,-30,z],[1,-36,z],.4,'steel',instrument,'switch');
+ box([15,-32,0],[22,2,30],'pcb',instrument,'tuning');
+ for(const z of [-11,11])rod([17,-30,z],[17,-22,z],2.2,'wireA',instrument,'tuning');
+ for(let y=-28;y<=-22;y+=1.5)box([17,y,0],[10,.45,7],'steel',instrument,'tuning');
+ for(const z of [-8,8]){
+  rod([26,-30,z],[38,-30,z],1.05,'board',instrument,'tuning');
+  rod([22,-30,z],[42,-30,z],.25,'steel',instrument,'tuning');
+ }
+ wire([[-90,-25,13],[-73,-31,22],[-56,-20,18]],'wireB');
+ wire([[-15,-15,15],[1,-28,23],[36,-28,25],[75,-34,44]],'wireA');
+ wire([[-14,-15,-15],[3,-32,-25],[35,-35,-34],[75,-34,-44]],'wireC');
+}
+function reset(){
+ instrument.traverse(o=>{if(o.isInstancedMesh)o.dispose?.();if(o.isPoints||o.isLine||o.userData.gasCloud)o.material.dispose();});beamTexture?.dispose();beamTexture=null;beamShader=null;instrument.clear();dynamicGeometry.forEach(g=>g.dispose());dynamicGeometry.length=0;movable=[];pickables=[];clouds=[];traces=[];particleObjects=[];batches.clear();hardwareCount=0;instrument.rotation.set(0,0,0);
+ for(const k of ['electrodes','faceCounts','pitch','electrodeDiameter','photoGeometry','hiddenConfiguration'])delete root.dataset[k];
+}
+const benchDescriptions={all:'Supplied setup photo · visible exterior reconstructed; dimensions estimated · hidden MultiQ configuration unverified.',chamber:'Photo: bolted box-shaped metal chamber, raised rim and panel screws · internal layout covered.',flanges:'Photo: cylindrical side connection, large circular flanges and fasteners · exact seal and valve design unverified.',sourcehousing:'Photo: Thermo-labelled circular-front source/interface housing, side knobs and small display · exact model unverified.',probe:'Photo: angled front tubing, fittings and adjustment hardware · probe type and internal ion path unverified.',topdevice:'Photo: black cylindrical device on the top port with a cable · make, model and function unverified.',terminalbank:'Photo: dense exterior connector bank and colored leads · individual circuit assignments and exact wire routes unverified.',labframe:'Photo: slotted extrusion rails, cross-members, corner brackets, posts and supports · profiles and dimensions estimated.',electronics:'Photo: three stacked vented equipment enclosures, ports and cables · brands and model numbers unreadable.',underbody:'Photo: partly visible cylindrical hardware below the chamber · pump type and connections unverified.',hoses:'Photo: pale corrugated front tube, underside corrugated hose and dark cables · routes estimated around obscured areas.',cabinet:'Photo: large instrument cabinet on the left, side panel and circular connection · analyzer model and unseen enclosure extent unverified.',auxbox:'Photo: separate blue vented enclosure below and to the right · function and manufacturer unverified.'};
+const descriptions={all:'Cross-checked: S1 manufacturing drawing + S2 circuit + S14 gates + paper photos · mount dimensions and wire routes reconstructed.',trap:'S1 drawing: 6.34 mm diameter × 6.34 mm body; 3.8 mm × 1 mm collar; 6.34 mm stem with 4-40 thread · alloy unspecified.',wall:'S1: six PCBs carrying 100 / 100 / 80 / 80 / 64 / 64 electrodes at 8.3 mm pitch · substrate footprints and thickness inferred.',wiring:'Fig. 1E: external leads and channel electronics are visible · cable routes, component types and board layouts reconstructed.',cloud:'Paper: nitrogen buffer gas at 0.05–0.1 Pa · motion illustrative.',inlet:'Fig. 1E: heated metal capillary followed by an RF-only quadrupole · geometry schematic.',channels:'Fig. 4A: nine selective quadrupoles; rods 12 mm long, 2 mm diameter, 1 mm gap · channel spacing schematic.',gate:'S14: individual channel gates at 19 V (open) / 24 V (closed); transfer quads at 18 V · gate shape and dimensions schematic.',frame:'Fig. 1E: long round support posts, apertured end plates and spacers · mounting dimensions reconstructed.',source:'Fig. 1E: electrospray source · nozzle geometry schematic.',vacuum:'Fig. 1E: interface at ~250 Pa; MultiQ region at ~0.1 Pa · chamber outlines schematic.',valve:'Fig. 1E: isolation valve between MultiQ and the commercial spectrometer · actuator shape schematic.',analyzer:'Fig. 1E: downstream commercial mass spectrometer · outline and transfer rods schematic, internal analyzer omitted.',converter:'S2: ZK-4KX DC–DC buck/boost converter, 0.5–30 V · physical package and placement schematic.',transformer:'S2: T200A-2 core; primary 3–5 turns, secondary 100–170 turns · core dimensions from Amidon; winding illustrated with 4 / 128 turns.',switch:'S2: IRF510 driven at 500 kHz, 10 V zero-to-peak · package placement schematic.',tuning:'S2: 10–70 pF trim capacitor, 0.1 µF coupling capacitors and 1 MΩ bias resistors · layout schematic.',collision:'Patent Fig. 7: proposed parallel collision cells; construction schematic.',accelerator:'Patent Fig. 7: proposed orthogonal TOF accelerator; construction schematic.',mirror:'Patent Fig. 7: proposed reflectron; construction schematic.',detector:'Patent Fig. 7: proposed position-sensitive detector; construction schematic.'};
+function build(){
+ reset();
+ root.dataset.assembly=state.assembly;
+ plinth.visible=state.assembly==='tandem';if(reflection)reflection.visible=state.assembly==='tandem';
+ const bench=state.assembly==='bench';controls.minDistance=bench?160:60;
+ key.position.set(...(bench?[-500,1700,600]:[-130,500,140]));rim.position.set(...(bench?[700,500,-700]:[150,90,-140]));floorMaterial.opacity=1;
+ const shadowExtent=bench?570:180;Object.assign(key.shadow.camera,{left:-shadowExtent,right:shadowExtent,top:shadowExtent,bottom:-shadowExtent,near:1,far:bench?2600:1000});key.shadow.camera.updateProjectionMatrix();
+ if(bench){
+  state.playing=false;photographedRig();floor.position.y=-380;controls.target.set(149.005,85.239,173.091);camera.position.set(345.71,345.862,903.261);
+  $('mq-view-caption').textContent='Source housing · custom chamber · frame · wiring · equipment';$('mq-source').textContent='Supplied setup photograph · exterior reconstruction';
+ }else if(state.assembly==='trap'){
+  trap([0,0,0],1,1,2);singleMount();floor.position.y=-64;controls.target.set(0,-3,0);camera.position.set(160,103,180);
+  $('mq-view-caption').textContent='486Q cube · adjacent guides · spring-mounted base';$('mq-source').textContent='Supplement Fig. S1 · manufactured prototype';
+ }else if(state.assembly==='power'){
+  trap([75,0,0],1,1);powerSupply();floor.position.y=-53;controls.target.set(4,-3,0);camera.position.set(175,140,310);
+  $('mq-view-caption').textContent='500 kHz RF drive · opposed electrode phases';$('mq-source').textContent='Supplement Fig. S2 · circuit reconstruction';
+ }else if(state.assembly==='tandem'||state.assembly==='rig'){
+  trap([-60,0,0]);trap([60,0,0],1,9);inlet(-103.02);connect(-16.98,16.98);qset(103.02,129,0,0,1.5,6);beam([[95,0,0],[111,0,0],[136,0,0]]);
+  tandemMount();
+  // The photographed tandem prototype is mounted vertically.
+  instrument.rotation.z=-Math.PI/2;floor.position.y=-132.1;plinth.position.y=-119.6;if(reflection)reflection.position.y=-132;controls.target.set(0,10,0);camera.position.set(240,145,360);
+  $('mq-view-caption').textContent='Upper splitter → nine channels → lower combiner';$('mq-source').textContent='Tandem paper prototype · Science Advances · 2026';
+  if(state.assembly==='rig'){
+   interfaceContext();floor.position.y=-257;controls.target.set(0,-35,0);camera.position.set(225,75,450);
+   $('mq-view-caption').textContent='ESI → ~250 Pa interface → ~0.1 Pa MultiQ → valve → MS';
+   $('mq-source').textContent='Fig. 1E experimental interface · schematic context';
+  }
+ }else{
+  trap([-108,0,0]);inlet(-149.5);
+  for(let i=0;i<10;i++){
+   const z=(i-4.5)*7;qset(-66.5,-48,0,z,.8,3);rod([-44,0,z],[-13,0,z],2.9,'steel',instrument,'collision');
+   for(const x of [-44,-13])rod([x-.8,0,z],[x+.8,0,z],3.8,'steel',instrument,'collision');
+   beam([[-70,0,z],[-45,0,z],[-10,0,z],[10,0,z]]);beam([[10,0,z],[10,34,z],[16,76,z],[27,103,z],[37,76,z],[46,34,z],[49,0,z]]);
+  }
+  box([10,-1,0],[19,8,78],'steel',instrument,'accelerator');
+  for(let y=83;y<=113;y+=5)box([28,y,0],[43,1,80],'steel',instrument,'mirror');
+  for(const x of [4,52])for(const z of [-42,42])rod([x,79,z],[x,119,z],1.8,'steel',instrument,'mirror');
+  box([50,-6,0],[16,4,78],'insulator',instrument,'detector');
+  for(let i=0;i<10;i++)box([50,-3.5,(i-4.5)*7],[12,.5,5],'steel',instrument,'detector');
+  // Open support frame: the patent gives a functional design, not production CAD.
+  for(const z of [-44,44]){box([27,-11,z],[76,3,3]);box([27,123,z],[76,3,3]);for(const x of [-10,64])box([x,56,z],[3,137,3]);}
+  floor.position.y=-47;controls.target.set(-38,23,0);camera.position.set(170,130,360);
+  $('mq-view-caption').textContent='Ten concurrent channels · patent concept';$('mq-source').textContent='WO2019236692A1 · proposed TOF architecture';
+ }
+ commit();beamParticles();
+ const opts=bench?[['all','Photographed assembly'],['sourcehousing','Front Thermo housing'],['chamber','Custom chamber'],['flanges','Flanges / side connection'],['probe','Front tubing / fittings'],['topdevice','Top cylindrical device'],['terminalbank','Connector bank / leads'],['labframe','Slotted frame / supports'],['electronics','Stacked equipment'],['underbody','Underside hardware'],['hoses','Corrugated hoses / cables'],['cabinet','Left instrument cabinet'],['auxbox','Blue enclosure']]:[['all','Shown assembly'],['trap','RF electrodes'],['wall','Wall / support boards'],['wiring','Wiring / channel electronics'],['cloud','Ion volume'],['inlet','Ion guides'],['frame','Support frame']];
+ if(!bench&&state.assembly!=='trap'&&state.assembly!=='power')opts.push(['channels','Parallel channels']);
+ if(state.assembly==='tandem'||state.assembly==='rig')opts.push(['splitter','Upper cube'],['combiner','Lower cube'],['gate','Channel gates']);
+ if(state.assembly==='power')opts.push(['converter','DC–DC converter'],['transformer','RF transformer'],['switch','RF switch'],['tuning','Resonant tuning']);
+ if(state.assembly==='rig')opts.push(['source','Electrospray source'],['vacuum','Vacuum regions'],['valve','Isolation valve'],['analyzer','Commercial MS connection']);
+ if(state.assembly==='tof')opts.push(['collision','Collision cells'],['accelerator','Accelerator'],['mirror','Reflectron'],['detector','Detector']);
+ if(!opts.some(([v])=>v===state.inspect))state.inspect='all';$('mq-inspect').replaceChildren(...opts.map(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;return o;}));
+ $('mq-model-note').textContent=bench?'Photo-based exterior · dimensions approximate · internals hidden':state.assembly==='tof'?'Patent concept · dimensions schematic':state.assembly==='power'?'S2 components · physical layout schematic':state.assembly==='rig'?'Confirmed flow · chamber shapes and dimensions schematic':state.assembly==='tandem'?'S1 dimensions · mounts approximate · studio display base':'S1 dimensions · photo-based mounts and wire routes approximate';
+ fit();controls.update();apply();renderer.shadowMap.needsUpdate=true;invalidate();
+}
+function fit(){
+ if(state.assembly==='bench'){
+  // Camera calibrated to four front-housing corners in the supplied photograph.
+  // ponytail: one-view perspective fit; hidden depths remain estimates until another angle is available.
+  const dir=camera.position.clone().sub(controls.target).normalize();controls.target.set(149.005,85.239,173.091);
+  camera.position.copy(controls.target).addScaledVector(dir,800*Math.max(1,1.642/camera.aspect));return;
+ }
+ const clusters=state.assembly==='trap'?[[[-56,-64,-56],[56,53,56]],[[43,-50,-15],[72,10,15]],[[-15,-50,43],[15,10,72]]]:state.assembly==='power'?[[[22,-53,-53],[129,53,53]],[[-128,-38,-28],[43,14,28]]]:state.assembly==='tandem'?[[[-55,-118,-56],[55,118,56]],[[-6,103,-6],[6,161,6]]]:state.assembly==='rig'?[[[-56,-118,-56],[56,118,56]],[[-18,106,-18],[18,177,18]],[[-44,-251,-40],[44,-126,40]]]:[[[-162,-53,-53],[-55,53,53]],[[-211,-6,-6],[-145,6,6]],[[-67,-14,-46],[68,129,46]]];
+ const center=new THREE.Vector3(...(state.assembly==='bench'?[-31,26,0]:state.assembly==='trap'?[5,-5,5]:state.assembly==='power'?[0,0,0]:state.assembly==='tandem'?[0,10,0]:state.assembly==='rig'?[0,-36,0]:[-39,25,0]));
+ const dir=camera.position.clone().sub(controls.target).normalize(),right=new THREE.Vector3().crossVectors(up,dir).normalize(),vertical=new THREE.Vector3().crossVectors(dir,right).normalize(),tanY=Math.tan(camera.fov*Math.PI/360),tanX=tanY*camera.aspect;
+ let distance=0;const include=(x,y,z)=>{const v=new THREE.Vector3(x,y,z).sub(center);distance=Math.max(distance,v.dot(dir)+Math.abs(v.dot(right))/tanX,v.dot(dir)+Math.abs(v.dot(vertical))/tanY);};
+ for(const [low,high] of clusters)for(const x of [low[0],high[0]])for(const y of [low[1],high[1]])for(const z of [low[2],high[2]])include(x,y,z);
+ if(state.assembly==='tandem')for(let i=0;i<32;i++)include(95*Math.cos(i*Math.PI/16),-132,95*Math.sin(i*Math.PI/16));
+ controls.target.copy(center);camera.position.copy(center).addScaledVector(dir,distance*1.08);
+}
+function apply(){
+ const studying=showStudy();if(studying)state.playing=false;
+ const bench=state.assembly==='bench';for(const id of ['mq-play','mq-cutaway','mq-explode','mq-cloud'])$(id).disabled=bench;
+ $('mq-play').disabled=bench||studying;
+ $('mq-motion-note').textContent=bench?'Covered internals omitted':'Cloud is illustrative gas density; it is not a computed ion distribution. Motion pauses with the simulator.';
+ stage.setAttribute('aria-label',bench?'Interactive 3D reconstruction of the supplied lab setup photograph: circular-front Thermo housing, bolted metal chamber, side flanges, slotted support rails, external wiring, stacked equipment, underside hardware and a blue enclosure. Dimensions estimated; covered interiors omitted.':state.assembly==='tandem'?'Interactive two-cube MultiQ instrument, grounded on a decorative studio display base with a curved backdrop, soft shadows and a floor reflection. The display base is presentation staging.':'Interactive physically based rendering of the MultiQ prototype and quadrupole channels.');
+ $('mq-cloud').checked=state.cloud;$('mq-assembly').value=state.assembly;$('mq-inspect').value=state.inspect;$('mq-cutaway').checked=state.cutaway;$('mq-explode').value=state.explode;$('mq-explode-value').textContent=state.explode+'%';$('mq-play').textContent=state.playing?'Pause ions':'Play ions';$('mq-play').setAttribute('aria-pressed',String(state.playing));
+ // Remove only the front board and RF array. The other five walls retain the real cube topology.
+ movable.forEach(p=>{p.g.position.copy(p.base).addScaledVector(p.n,state.explode*.28);p.g.visible=!(state.cutaway&&p.g.userData.axis===2&&p.g.userData.sign===1);});
+ clouds.forEach(c=>c.visible=state.cloud);root.dataset.clouds=String(state.cloud?clouds.length:0);particleObjects.forEach(o=>o.visible=!studying&&(state.playing||state.inspect==='channels'));
+ $('mq-detail').textContent=bench?(benchDescriptions[state.inspect]||benchDescriptions.all):(descriptions[state.inspect]||descriptions.all);
+ if(state.inspect==='splitter')$('mq-detail').textContent='Upper 486Q cube · nine mass-selective transfer channels · S1 electrode dimensions; mount and circuitry layout reconstructed.';
+ if(state.inspect==='combiner')$('mq-detail').textContent='Lower 486Q cube · combines the nine channels into one outlet · S1 electrode dimensions; mount and circuitry layout reconstructed.';
+ if(state.assembly==='trap'&&state.inspect==='frame')$('mq-detail').textContent='S1 photo: spring-supported double base plate and adjacent gold-colored guide brackets · dimensions reconstructed.';
+ if(state.assembly==='trap'&&state.inspect==='inlet')$('mq-detail').textContent='S1 photo: external quadrupole guides on adjacent faces · rod, ring and bracket dimensions reconstructed.';
+ if(studying){$('mq-detail').textContent='Nine-channel assembly · mqviz models one channel';$('mq-motion-note').textContent='Illustrative cloud in the trap · computed ion trajectories in the live panel →';}
+ if(bench)focusBench();
+ else if(state.assembly==='tandem')focusTandem();
+ renderer.shadowMap.needsUpdate=true;invalidate();
+}
+$('mq-fit').onclick=()=>{fit();controls.update();invalidate();};
+function focusTandem(){
+ const centers={splitter:[0,60,0,290],combiner:[0,-60,0,290],channels:[0,0,0,270],gate:[0,0,0,230],wiring:[0,0,30,290],wall:[0,60,0,290],trap:[0,60,0,290],frame:[0,8,0,550],inlet:[0,133,0,270],cloud:[0,60,0,290]};
+ const v=centers[state.inspect];if(!v){fit();return;}
+ const dir=camera.position.clone().sub(controls.target).normalize();controls.target.set(v[0],v[1],v[2]);camera.position.copy(controls.target).addScaledVector(dir,v[3]/Math.min(1,camera.aspect));controls.update();invalidate();
+}
+function focusBench(){
+ const views={sourcehousing:[-20,50,140,500],probe:[-35,32,202,270],chamber:[-20,61,-22,690],flanges:[-188,65,45,390],topdevice:[-20,178,153,320],terminalbank:[177,45,-14,360],labframe:[170,-104,55,1100],electronics:[186,161,-227,650],underbody:[12,-134,132,440],hoses:[-46,-81,165,960],cabinet:[-362,80,35,1300],auxbox:[350,-140,170,390]};
+ const v=views[state.inspect];if(!v){fit();return;}
+ const dir=camera.position.clone().sub(controls.target).normalize();controls.target.set(v[0],v[1],v[2]);camera.position.copy(controls.target).addScaledVector(dir,v[3]/Math.min(1,camera.aspect));controls.update();invalidate();
+}
+let frame=0,clock=0,last=0,visible=true,disposed=false,dirty=true,frames=0,cloudTime=0,cloudPaused=false,lastDraw=0;
+function invalidate(){dirty=true;reflectionDirty=true;if(!frame&&visible&&!disposed)frame=requestAnimationFrame(tick);}
+// ponytail: illustrative transport only; use the authors’ field solver for quantitative ion trajectories.
+function updateIons(dt){clock+=dt;if(beamShader)beamShader.uniforms.time.value=clock;}
+function tick(now){
+ frame=0;if(disposed)return;if(!root.isConnected){dispose();return;}if(!visible||document.hidden||!document.hasFocus()||!stage.clientWidth)return;
+ const dt=last?Math.min((now-last)/1000,.04):0;last=now;const moving=controls.update();
+ const animateCloud=state.cloud&&clouds.length&&!cloudPaused&&!reduced.matches;
+ if(animateCloud){cloudTime+=dt;for(const c of clouds)c.material.uniforms.time.value=cloudTime;root.dataset.cloudTime=cloudTime.toFixed(3);}
+ if(state.playing)updateIons(dt);
+ const animate=state.playing||animateCloud;
+ if(dirty||moving||(animate&&now-lastDraw>=1000/20)){
+  lastDraw=now;
+  floor.rotation.y=Math.atan2(camera.position.x-controls.target.x,camera.position.z-controls.target.z);
+  renderer.render(scene,camera);root.dataset.calls=renderer.info.render.calls;root.dataset.triangles=renderer.info.render.triangles;
+  if(ao&&state.assembly!=='bench'){
+   // Cache occlusion when the camera and hardware are still; ion playback needs only one cheap composite.
+   if(dirty||moving){const hidden=[...clouds,...particleObjects].map(o=>[o,o.visible]);hidden.forEach(([o])=>o.visible=false);ao.render(renderer,null,null);hidden.forEach(([o,v])=>o.visible=v);}
+   else{ao.renderPass(renderer,ao.materialCopy,null);}
+   root.dataset.occlusion='cached GPU ambient occlusion';
+  }else delete root.dataset.occlusion;
+  dirty=false;root.dataset.frames=String(++frames);root.dataset.parts=hardwareCount;
+  if(state.assembly==='tandem'){root.dataset.stage='studio';root.dataset.reflections=String(reflectionFrames);}else{delete root.dataset.stage;delete root.dataset.reflections;}
+ }
+ if(!frame&&(animate||moving))frame=requestAnimationFrame(tick);
+}
+function save(){state.revision=Date.now();try{localStorage.setItem('multiq-state',JSON.stringify({...restore(state),version:6}));}catch{$('mq-link-status').textContent='Settings could not be saved';}}
+$('mq-study').addEventListener('click',()=>{state.assembly='tandem';state.inspect='channels';build();save();});
+$('mq-cloud').addEventListener('change',e=>{state.cloud=e.target.checked;apply();save();});
+window.addEventListener('multiq-frame',e=>{const paused=!!e.detail.snapshot.params.paused;if(paused!==cloudPaused){cloudPaused=paused;last=0;invalidate();}});
+reduced.addEventListener('change',invalidate);
+$('mq-ac').addEventListener('change',e=>{state.ac=Number(e.target.value);showStudy();save();});
+$('mq-assembly').addEventListener('change',e=>{state.assembly=e.target.value;build();save();});$('mq-inspect').addEventListener('change',e=>{state.inspect=e.target.value;apply();save();});$('mq-cutaway').addEventListener('change',e=>{state.cutaway=e.target.checked;apply();save();});$('mq-explode').addEventListener('input',e=>{state.explode=+e.target.value;apply();});$('mq-explode').addEventListener('change',save);$('mq-play').addEventListener('click',()=>{state.playing=!state.playing;last=0;apply();save();});
+controls.addEventListener('change',invalidate);
+const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();let down=[0,0];
+renderer.domElement.addEventListener('pointerdown',e=>down=[e.clientX,e.clientY]);
+renderer.domElement.addEventListener('pointerup',e=>{if(Math.hypot(e.clientX-down[0],e.clientY-down[1])>4)return;const r=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);const hit=ray.intersectObjects(pickables).find(h=>{for(let p=h.object;p;p=p.parent)if(!p.visible)return false;return true;});if(hit){state.inspect=hit.object.userData.kind;apply();save();}});
+const resize=new ResizeObserver(()=>{const w=stage.clientWidth,h=stage.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();if(ao)ao.setSize(Math.round(w*.5),Math.round(h*.5));if(state.assembly==='bench')focusBench();else if(state.assembly==='tandem')focusTandem();else fit();controls.update();invalidate();});resize.observe(stage);
+const intersection=new IntersectionObserver(es=>{visible=es[0].isIntersecting;if(!visible){cancelAnimationFrame(frame);frame=0;last=0;}else invalidate();});intersection.observe(stage);
+function visibility(){if(document.hidden||!document.hasFocus()){cancelAnimationFrame(frame);frame=0;last=0;}else invalidate();}document.addEventListener('visibilitychange',visibility);window.addEventListener('focus',visibility);window.addEventListener('blur',visibility);
+const appearance=new MutationObserver(theme);appearance.observe(document.documentElement,{attributes:true,attributeFilter:['class','style','data-theme']});const darkMedia=matchMedia('(prefers-color-scheme: dark)');darkMedia.addEventListener('change',theme);
+const removal=new MutationObserver(()=>{if(!root.isConnected)dispose();});removal.observe(root.parentNode,{childList:true});
+function dispose(){if(disposed)return;disposed=true;cancelAnimationFrame(frame);resize.disconnect();intersection.disconnect();appearance.disconnect();removal.disconnect();controls.dispose();reset();geometryCache.forEach(g=>g.dispose());materialCache.forEach(m=>m.dispose());floor.geometry.dispose();floorMaterial.dispose();plinth.geometry.dispose();displayMaterial.dispose();backdropTexture?.dispose();if(reflection){reflection.geometry.dispose();reflection.material.dispose();reflection.getRenderTarget().dispose();}grain.dispose();envTarget?.dispose();pmrem.dispose();if(ao){for(const k of ['saoRenderTarget','blurIntermediateRenderTarget','beautyRenderTarget','normalRenderTarget','depthRenderTarget','depthMaterial','normalMaterial','saoMaterial','vBlurMaterial','hBlurMaterial','materialCopy','depthCopy'])ao[k].dispose();ao.fsQuad.dispose();}renderer.dispose();document.removeEventListener('visibilitychange',visibility);window.removeEventListener('focus',visibility);window.removeEventListener('blur',visibility);darkMedia.removeEventListener('change',theme);reduced.removeEventListener('change',invalidate);}
+theme();build();
+})();
+</script>
