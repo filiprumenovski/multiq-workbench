@@ -1,0 +1,5 @@
+grid,spacing_mm,return,electrode,box,transmit,timeout,kept_return,gained_return,lost_return,all_end_labels_changed
+archived,0.1,176,805,19,0,0,,,,
+fresh1,0.1,175,808,17,0,0,162,13,14,35
+fresh2,0.05,196,787,17,0,0,136,60,39,129
+fresh3,0.03333333333333333,207,778,15,0,0,178,29,18,61
