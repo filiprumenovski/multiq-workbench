@@ -4,6 +4,18 @@ A macOS research simulator for the MultiQ ion trap. Follow a single ion through 
 
 This is an independent implementation based on the [instrument and simulations reported by Krutchinsky and Chait](https://doi.org/10.1126/sciadv.aec7048). The workbench has been checked against the released code and digitized figures. Its predictions have not been validated against raw instrument scans or transients.
 
+## Improvements and extensions
+
+Building on the authors’ released Processing/Java simulations, this project adds:
+
+- **Corrected velocity integration.** The desktop Rust solver applies the full acceleration increment, Δv = aΔt, before advancing position. The released code infers velocity from average displacement, producing a half-sized increment. Controlled comparisons retain the original behavior as a baseline; the resulting resonance changes are documented [below](#numerical-checks).
+- **Connected nine-channel transport.** A shared ion population moves through a splitter, nine independently driven channels, and a combiner. Rejected ions return to the trap with their state intact and can try another channel. Per-port counts and a retry matrix expose where ions go. The initial four-channel configuration follows the charge-state targets in Fig. 5.
+- **Rust transport and GPU batch calculations.** The channel library includes Apple Metal kernels for running many independent trajectories and operating settings together, plus cached results and adaptive frequency scans. These support broader parameter searches and more sampling near resonances. The live desktop and tandem transport use CPU calculations; GPU batching is a separate library capability.
+- **Explicit field and collision modeling.** The desktop model uses trilinear field interpolation and thermal nitrogen collisions. Comparisons changed interpolation, collisions, and return/loss boundaries one at a time to identify why its outcomes differ from Java. Finer, independently solved grids then tested how sensitive the return fraction is to field resolution.
+- **An interactive instrument workbench.** A Tauri app places the instrument reconstruction beside computed trajectories, with sliders, pause/step controls, frequency scans, and transmission/leakage searches. Seeded runs and exports retain settings and counts for subsequent analysis.
+
+These changes extend the simulation and make its assumptions easier to test. They do not yet demonstrate improved performance of the physical instrument; that requires raw scans and transients with operating settings and timing.
+
 ## Run on macOS
 
 Install the Xcode Command Line Tools, stable Rust, and Node.js with npm. The app uses Tauri 2; the channel library requires Apple Metal. From the repository root:
